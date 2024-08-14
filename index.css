@@ -1,0 +1,71 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #606c88;
+  background: -webkit-linear-gradient(to right, #3f4c6b, #606c88);
+  background: linear-gradient(to right, #3f4c6b, #606c88);
+}
+
+header > h1 {
+  color: #fff;
+  text-align: center;
+}
+#current_time {
+  width: 20%;
+  margin: auto;
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  font-size: 2.5rem;
+}
+#setting_timer {
+  width: 30%;
+  margin: auto;
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 20px;
+}
+.setting_timer_box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  /* width: 60%; */
+  margin: auto;
+}
+#setting_timer h2 {
+  font-size: 20px;
+  text-align: center;
+}
+#setting_timer_box select {
+  width: 90px;
+  height: 30px;
+  border-radius: 5px;
+}
+.buttonHandle {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.setTimBtn {
+  background-color: #3f4c6b;
+  color: #fff;
+  border-radius: 5px;
+  padding: 5px;
+  margin-top: 10px;
+  text-align: end;
+  border: none;
+}
+.resetBtn {
+  border: none;
+  background-color: darkred;
+  color: #fff;
+  border-radius: 5px;
+  padding: 5px;
+  margin-top: 10px;
+  text-align: end;
+}
+.setTimBtn:hover {
+  background-color: #606c88;
+}
