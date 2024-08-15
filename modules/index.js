@@ -1,5 +1,4 @@
 const clockElement = document.getElementById("clock");
-const alarmNameInput = document.getElementById("alarm-name");
 const alarmHourInput = document.getElementById("alarm-hour");
 const alarmMinuteInput = document.getElementById("alarm-minute");
 const alarmPeriodInput = document.getElementById("alarm-period");
@@ -9,9 +8,11 @@ const snoozeAlarmButton = document.getElementById("snooze-alarm");
 const alarmMessage = document.getElementById("alarm-message");
 const alarmsList = document.getElementById("alarms");
 const alarmSound = document.getElementById("alarm-sound");
+const alarmRingingImg = document.getElementById("alarm-ringing");
 
 let alarms = [];
 let activeAlarm = null;
+let snoozeTimeout = null;
 
 function populateTimeOptions() {
   for (let i = 1; i <= 12; i++) {
@@ -34,11 +35,11 @@ function updateClock() {
   const hours = String(now.getHours()).padStart(2, "0");
   const minutes = String(now.getMinutes()).padStart(2, "0");
   const seconds = String(now.getSeconds()).padStart(2, "0");
-  clockElement.textContent = `${hours}:${minutes}:${seconds}`;
-
+  const period = hours >= 12 ? "PM" : "AM";
+  clockElement.textContent = `${hours}:${minutes}:${seconds} ${period}`;
   alarms.forEach((alarm) => {
     const alarmTime = formatTime(alarm.hour, alarm.minute, alarm.period);
-    if (alarmTime === `${hours}:${minutes}`) {
+    if (alarmTime === `${hours}:${minutes} ${period}`) {
       triggerAlarm(alarm);
     }
   });
@@ -52,44 +53,39 @@ function formatTime(hour, minute, period) {
   if (period === "AM" && formattedHour === 12) {
     formattedHour = 0;
   }
-  return `${String(formattedHour).padStart(2, "0")}:${minute}`;
+  return `${String(formattedHour).padStart(2, "0")}:${minute} ${period}`;
 }
 
 function setAlarm() {
-  const name = alarmNameInput.value.trim();
   const hour = alarmHourInput.value;
   const minute = alarmMinuteInput.value;
   const period = alarmPeriodInput.value;
 
-  if (!name || !hour || !minute) {
-    alarmMessage.classList.add("alarm-message-p");
+  if (!hour || !minute) {
     alarmMessage.textContent = "Please fill all fields to set an alarm.";
     return;
   }
 
-  const newAlarm = { name, hour, minute, period };
+  const newAlarm = { hour, minute, period };
   const existingAlarm = alarms.find(
     (alarm) =>
       alarm.hour === hour && alarm.minute === minute && alarm.period === period
   );
 
   if (existingAlarm) {
-    alarmMessage.classList.add("alarm-message-p");
     alarmMessage.textContent = "An alarm is already set for this time.";
     return;
   }
 
   alarms.push(newAlarm);
   renderAlarms();
-  alarmMessage.classList.add("alarm-message-p");
   alarmMessage.textContent = `Alarm set for ${formatTime(
     hour,
     minute,
     period
-  )} (${name})`;
+  )}`;
   if (alarmMessage.textContent.includes("Alarm set for")) {
     setTimeout(() => {
-      alarmMessage.classList.remove("alarm-message-p");
       alarmMessage.innerHTML = "";
     }, 5000);
   }
@@ -97,25 +93,29 @@ function setAlarm() {
 }
 
 function triggerAlarm(alarm) {
-  alarmMessage.classList.add("alarm-message-p");
-  alarmMessage.textContent = `Wake up! ${alarm.name} alarm is ringing!`;
+  alarmMessage.textContent = `Wake up! alarm is ringing!`;
+  alarmRingingImg.src = "./modules/Alarm_Clock_Animation_High_Res.png";
   alarmSound.play();
   activeAlarm = alarm;
   stopAlarmButton.classList.remove("hidden");
   snoozeAlarmButton.classList.remove("hidden");
+
+  // Automatically snooze after 3 minutes if not stopped
+  snoozeTimeout = setTimeout(snoozeAlarm, 180000);
 }
 
 function stopAlarm() {
   if (activeAlarm) {
     alarmSound.pause();
     alarmSound.currentTime = 0;
-    alarmMessage.classList.remove("alarm-message-p");
     alarmMessage.innerHTML = "";
     alarms = alarms.filter((alarm) => alarm !== activeAlarm);
     renderAlarms();
     stopAlarmButton.classList.add("hidden");
     snoozeAlarmButton.classList.add("hidden");
     activeAlarm = null;
+    alarmRingingImg.src = "./modules/alarm-5961342_1280.png";
+    clearTimeout(snoozeTimeout); // Cancel the automatic snooze
   }
 }
 
@@ -123,21 +123,20 @@ function snoozeAlarm() {
   if (activeAlarm) {
     stopAlarm();
     const snoozeTime = new Date();
-    snoozeTime.setMinutes(snoozeTime.getMinutes() + 5);
+    snoozeTime.setMinutes(snoozeTime.getMinutes() + 2);
     const snoozeHour = snoozeTime.getHours() % 12 || 12;
     const snoozeMinute = String(snoozeTime.getMinutes()).padStart(2, "0");
     const snoozePeriod = snoozeTime.getHours() >= 12 ? "PM" : "AM";
 
     alarms.push({
-      name: `${activeAlarm.name} (Snooze)`,
       hour: String(snoozeHour).padStart(2, "0"),
       minute: snoozeMinute,
       period: snoozePeriod,
     });
 
     renderAlarms();
-    alarmMessage.classList.add("alarm-message-p");
-    alarmMessage.textContent = `Alarm snoozed for 5 minutes.`;
+    alarmMessage.textContent = `Alarm snoozed for 2 minutes.`;
+    alarmRingingImg.src = "./modules/alarm-5961342_1280.png";
   }
 }
 
@@ -146,7 +145,7 @@ function renderAlarms() {
   alarms.forEach((alarm, index) => {
     const li = document.createElement("li");
     const alarmTime = formatTime(alarm.hour, alarm.minute, alarm.period);
-    li.innerHTML = `<span class="alarm-text">${alarmTime} - ${alarm.name}</span><button class="remove-alarm" data-index="${index}">Remove</button>`;
+    li.innerHTML = `<span class="alarm-text">${alarmTime}</span><button class="remove-alarm" data-index="${index}">Remove</button>`;
     alarmsList.appendChild(li);
   });
 
@@ -163,9 +162,8 @@ function removeAlarm(e) {
 }
 
 function clearInputs() {
-  alarmNameInput.value = "";
-  alarmHourInput.value = "";
-  alarmMinuteInput.value = "";
+  alarmHourInput.value = "01";
+  alarmMinuteInput.value = "00";
   alarmPeriodInput.value = "AM";
 }
 
